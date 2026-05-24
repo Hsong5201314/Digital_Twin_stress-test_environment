@@ -51,7 +51,7 @@ def get_flat_grads(loss, model, retain_graph=True):
 
 @torch.no_grad()
 def compute_gradient_alignment(loss1, loss2, model, retain_graph=True):
-    """Calculate cosine phase angle (\(\rho\)) between tangent vectors"""
+    r"""Calculate cosine phase angle (\(\rho\)) between tangent vectors"""
     g1 = get_flat_grads(loss1, model, retain_graph=retain_graph)
     g2 = get_flat_grads(loss2, model, retain_graph=retain_graph)
     return F.cosine_similarity(g1, g2, dim=0).item()
