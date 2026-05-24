@@ -1,0 +1,21 @@
+# ============================================================================
+# Digital Twin Stress-Test Sandbox - Minimal Requirements
+# Designed for ultra-lightweight, cross-platform reproducibility.
+# ============================================================================
+
+# --- Core Physical & Topological Simulation Engine ---
+# Requires PyTorch 2.0+ for stable autograd and Hessian/spectral computations.
+torch>=2.0.0
+
+# --- Mathematical Operations & Data Manifold Processing ---
+numpy>=1.22.0
+pandas>=1.4.0
+
+# --- Observation Instruments (Visualizing Phase Transitions) ---
+# Matplotlib and Seaborn are strictly used for rendering high-fidelity 
+# academic figures (PDF/PNG) for the paper.
+matplotlib>=3.5.0
+seaborn>=0.12.0
+
+# --- Tracking & Logging ---
+tqdm>=4.64.0
