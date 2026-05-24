@@ -2,7 +2,9 @@
 **Thank you for reviewing our paper! Please note the following repository structure:**
 
 **1. Exact Paper Reproduction (Original Submission):**
-> To reproduce the exact results, tables, and figures presented in the submitted PDF, please use the code in the adjacent main repository folder `../IM-Net/`.
+> To reproduce the exact results, tables, and figures presented in the submitted PDF, you may refer to the original code in the ../EPT/ folder (under the Digital_Twin_stress-test_environment repository) and the ../IM-Net/RQ4/ folder (under the IM-Net repository).
+
+>For a more integrated and improved version, all experimental content and code from EPT and RQ4 have been consolidated into Digital_Twin_Stress-Test-V1.1/ within the Digital_Twin_stress-test_environment repository.
 
 **2. Post-Submission Improvements (Digital Twin Stress Test):**
 > Science is an ongoing process! After the submission deadline, we have continued to refine our framework. We have recently introduced a highly robust Digital Twin Stress Test, which further validates the proactive nature of IM-Net under extreme gradient interference.
