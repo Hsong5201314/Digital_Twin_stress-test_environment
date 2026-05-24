@@ -1,1 +1,1 @@
-Place the specified yelp_sample_conflict dataset of the paper here.
+Place the specified data_mini_yelp dataset of the paper here.
