@@ -4,6 +4,8 @@ This repository contains the early-version release of the **Digital Twin Stress-
 
 By utilizing a Canonical Coupled Oscillator Simulation environment based on a LightGCN backbone and the yelp_sample_conflict dataset, this setup serves as a proxy for complex physical systems governed by competing constraints (e.g., conflicting forces in molecular dynamics or fluid simulations).
 
+This introduction is described based on the content and structure of EPT. The digital twin stress test has been later organized into Digital_Twin_Stress-Test-V1.1, which integrates both EPT and RQ4 modules. See the README.md inside this folder for full details.
+
 ## 🔬 Theoretical Background
 
 To evaluate the meta-controller independent of architectural inductive biases, we establish a "Severe Conflict" boundary condition. In this stress-test, the auxiliary gradient is mathematically forced to directly oppose the primary task gradient (ρ≈−0.99). This establishes a theoretical "worst-case" dynamical system.
