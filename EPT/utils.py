@@ -29,8 +29,7 @@ def compute_hessian_spectral_radius(model, loss, num_iter=10, tolerance=1e-6,
     Args:
         model: The neural manifold encoder (e.g., LightGCN).
         loss: The scalar energy functional (Weighted Loss).
-              !! 调用方必须保证此 loss 的计算图尚未被 backward() 释放，
-                 且 loss 通过 model.parameters() 可微。
+              !! The caller must ensure that the computation graph of this loss has NOT been freed by backward(), and that the loss is differentiable with respect to model.parameters().
         num_iter: Iterations for spectral convergence.
         tolerance: Numerical stability epsilon.
         verbose: If True, prints intermediate norms.
@@ -47,13 +46,8 @@ def compute_hessian_spectral_radius(model, loss, num_iter=10, tolerance=1e-6,
     if not params:
         return 0.0
 
-    # ── 修复1：不再对 loss 做 detach().requires_grad_(True)。
-    #    原代码在 HessianTracker.step() 中执行该操作，切断了 loss 与
-    #    model.parameters() 之间的计算图，使 autograd.grad(loss, params)
-    #    无法找到路径，触发 RuntimeError。
-    #    正确做法：直接使用调用方传入的、计算图完整的 loss。
     try:
-        # 1. Compute first-order gradient field（需要 create_graph=True 以支持 HVP）
+        # 1. Compute first-order gradient field (Requires create_graph=True to support HVP)
         grads = torch.autograd.grad(
             loss, params,
             create_graph=True,
@@ -65,7 +59,7 @@ def compute_hessian_spectral_radius(model, loss, num_iter=10, tolerance=1e-6,
             for g, p in zip(grads, params)
         ]
     except RuntimeError as e:
-        # 计算图已释放或其他原因导致失败，安全降级返回 0.0
+        # Safely return 0.0 on computation graph release or failure
         if verbose:
             print(f"[HessianTracker] grad computation failed: {e}")
         return 0.0
@@ -116,7 +110,7 @@ def compute_hessian_spectral_radius(model, loss, num_iter=10, tolerance=1e-6,
             print(f"[HessianTracker] HVP iteration failed: {e}")
         return 0.0
     finally:
-        # 6. 显式释放中间变量（不影响调用方的计算图）
+        # 6. Explicitly free intermediates (caller graph unaffected)
         del flat_grads
 
     return abs(spectral_radius)
@@ -187,18 +181,18 @@ class HessianTracker:
     A lightweight wrapper to compute and log the Hessian spectral radius periodically
     during training without cluttering the main loop.
 
-    !! 重要调用约定（修复后）：
-       hessian_tracker.step(loss, epoch, batch_idx) 必须在 loss.backward() 之前调用。
-       原因：compute_hessian_spectral_radius 需要完整的计算图（create_graph=True），
-       一旦 backward() 执行，图将被释放，后续无法再次对同一 loss 求高阶导数。
+    !! IMPORTANT CALLING CONVENTION:
+       hessian_tracker.step(loss, epoch, batch_idx) MUST be called BEFORE loss.backward().
+       Reason: compute_hessian_spectral_radius requires the full computation graph (create_graph=True).
+       Once backward() is executed, the graph will be freed, and higher-order derivatives cannot be computed again for the same loss.
 
     Usage:
         total_loss = compute_loss(...)
 
-        # Step 1: 先计算谱半径（图完整）
+        # Step 1: Compute spectral radius first (graph intact)
         sr = tracker.step(total_loss, epoch, batch_idx)
 
-        # Step 2: 再做模型参数更新（会释放计算图）
+        # Step 2: Then perform model parameter update (will free the computation graph).
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
@@ -215,26 +209,16 @@ class HessianTracker:
         """
         Returns spectral radius (float) if this is a compute step, else None.
 
-        !! loss 必须是计算图完整的 tensor（尚未经过 backward()）。
+       !! The loss must be a tensor with an intact computation graph (has NOT been through backward()).
         """
         self.step_counter += 1
         if self.step_counter % self.compute_freq != 0:
             return None
 
-        # ── 修复2：删除 loss.detach().requires_grad_(True)。
-        #    原代码：
-        #        if not loss.requires_grad:
-        #            loss = loss.detach().requires_grad_(True)
-        #    该操作将 loss 与 model.parameters() 的计算图完全切断，
-        #    导致 compute_hessian_spectral_radius 中
-        #    autograd.grad(loss, params) 报 RuntimeError。
-        #
-        #    修复：直接使用原始 loss（调用方负责在 backward() 前调用本方法）。
-        #    如果 loss 本身不需要梯度（例如被 detach 过），则无法计算，安全返回 0.0。
         if not loss.requires_grad:
             return 0.0
 
-        # 保持模型处于训练模式（HVP 计算需要参数梯度）
+        # Keep the model in training mode (HVP computation requires parameter gradients).
         was_training = self.model.training
         self.model.train()
 
@@ -245,7 +229,7 @@ class HessianTracker:
                 loss_scaling=self.loss_scaling
             )
 
-        # 恢复原始训练模式
+        # Restore the original training mode.
         if not was_training:
             self.model.eval()
 
